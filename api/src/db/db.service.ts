@@ -1,22 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { Pool } from 'pg';
-import { Inject } from '@nestjs/common';
 
 @Injectable()
 export class DbService {
   private pool: Pool;
 
-  constructor() {
+    constructor() {
     this.pool = new Pool({
-      host: 'localhost',
-      port: 5433, // Тот самый порт, на котором заработал Docker
-      user: 'postgres',
-      password: 'postgres',
-      database: 'areal_hr',
+      host: process.env.DB_HOST || 'localhost',
+      // Исправлено: добавляем пустую строку или дефолтное значение '5433' перед парсингом
+      port: parseInt(process.env.DB_PORT || '5433', 10),
+      user: process.env.DB_USERNAME || 'postgres',
+      password: process.env.DB_PASSWORD || 'postgres',
+      database: process.env.DB_DATABASE || 'areal_hr',
     });
   }
 
-  // Метод для выполнения запросов
   async query(text: string, params?: any[]) {
     return this.pool.query(text, params);
   }

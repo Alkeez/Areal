@@ -5,6 +5,6 @@ import { DbService } from '../db/db.service';
 
 @Module({
   controllers: [PositionsController],
-  providers: [PositionsService, DbService],
+  providers: [PositionsService],
 })
 export class PositionsModule {}

@@ -5,6 +5,6 @@ import { DbService } from '../db/db.service';
 
 @Module({
   controllers: [OrganizationsController],
-  providers: [OrganizationsService, DbService],
+  providers: [OrganizationsService],
 })
 export class OrganizationsModule {}

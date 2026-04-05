@@ -5,6 +5,6 @@ import { DbService } from '../db/db.service';
 
 @Module({
   controllers: [DepartmentsController],
-  providers: [DepartmentsService, DbService],
+  providers: [DepartmentsService],
 })
 export class DepartmentsModule {}

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, ParseIntPipe } from '@nestjs/common';
 import { ChangeHistoryService } from './change_history.service';
 import { CreateChangeHistoryDto } from './dto/create-change-history.dto';
 
@@ -19,10 +19,5 @@ export class ChangeHistoryController {
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.service.findOne(id);
-  }
-
-  @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.service.remove(id);
   }
 }

@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { EmployeesService } from './employees.service';
-import { CreateEmployeeDto } from './dto/create-employee.dto';
+import { CreateEmployeeDto, UpdateEmployeeDto } from './dto/create-employee.dto'; // Импортируем оба
 
 @Controller('employees')
 export class EmployeesController {
@@ -11,9 +11,10 @@ export class EmployeesController {
     return this.service.create(dto);
   }
 
+  // Исправление ошибки 5: Добавляем поиск
   @Get()
-  findAll() {
-    return this.service.findAll();
+  findAll(@Query('search') search?: string) {
+    return this.service.findAll(search);
   }
 
   @Get(':id')
@@ -21,8 +22,9 @@ export class EmployeesController {
     return this.service.findOne(id);
   }
 
+  // Используем UpdateEmployeeDto
   @Put(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: CreateEmployeeDto) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateEmployeeDto) {
     return this.service.update(id, dto);
   }
 

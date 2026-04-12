@@ -1,14 +1,14 @@
 import { IsString, IsNotEmpty, IsOptional, IsDateString, IsInt } from 'class-validator';
+import { PartialType } from '@nestjs/mapped-types';
 
 export class CreateEmployeeDto {
-  // ФИО
   @IsString()
   @IsNotEmpty()
-  surname: string;
+  surname!: string;
 
   @IsString()
   @IsNotEmpty()
-  first_name: string;
+  first_name!: string;
 
   @IsString()
   @IsOptional()
@@ -39,7 +39,7 @@ export class CreateEmployeeDto {
   @IsOptional()
   passport_issued_by?: string;
 
-  // Адрес регистрации
+  // Адрес
   @IsString()
   @IsOptional()
   reg_region?: string;
@@ -64,3 +64,6 @@ export class CreateEmployeeDto {
   @IsOptional()
   reg_apartment?: string;
 }
+
+// UpdateDTO: все поля из CreateEmployeeDto становятся опциональными
+export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {}

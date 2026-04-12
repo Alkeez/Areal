@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DbService } from '../db/db.service';
-import { CreateEmployeeDto } from './dto/create-employee.dto';
+import { CreateEmployeeDto, UpdateEmployeeDto } from './dto/create-employee.dto';
+import { ChangeHistoryService } from '../change_history/change_history.service'; // Импорт
 
 @Injectable()
 export class EmployeesService {
-  constructor(private readonly db: DbService) {}
+  constructor(
+    private readonly db: DbService,
+    private readonly history: ChangeHistoryService, // Инжектируем историю
+  ) {}
 
   async create(dto: CreateEmployeeDto) {
     const sql = `
@@ -25,8 +29,19 @@ export class EmployeesService {
     return result.rows[0];
   }
 
-  async findAll() {
-    const result = await this.db.query(`SELECT * FROM employees WHERE deleted_at IS NULL ORDER BY id DESC;`);
+  async findAll(search?: string) {
+    let sql = `SELECT * FROM employees WHERE deleted_at IS NULL`;
+    // Явно указываем тип массива, чтобы TypeScript не ругался
+    const params: any[] = []; 
+
+    if (search) {
+      sql += ` AND (surname ILIKE $1 OR first_name ILIKE $1 OR patronymic ILIKE $1)`;
+      params.push(`%${search}%`);
+    }
+    
+    sql += ` ORDER BY id DESC;`;
+    
+    const result = await this.db.query(sql, params);
     return result.rows;
   }
 
@@ -38,25 +53,37 @@ export class EmployeesService {
     return result.rows[0];
   }
 
-  async update(id: number, dto: CreateEmployeeDto) {
-    await this.findOne(id); // Проверка существования
+  async update(id: number, dto: UpdateEmployeeDto) {
+    // Получаем старую запись
+    const oldEmployee = await this.findOne(id);
+
+    // Формируем динамический SQL для обновления только переданных полей
+    const keys = Object.keys(dto);
+    if (keys.length === 0) return oldEmployee; // Нечего обновлять
+
+    const sets = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
+    const values = Object.values(dto);
     
-    const sql = `
-      UPDATE employees SET
-        surname = $1, first_name = $2, patronymic = $3, birth_date = $4,
-        passport_series = $5, passport_number = $6, passport_issue_date = $7, passport_div_code = $8, passport_issued_by = $9,
-        reg_region = $10, reg_city = $11, reg_street = $12, reg_house = $13, reg_building = $14, reg_apartment = $15,
-        updated_at = NOW()
-      WHERE id = $16
-      RETURNING *;
-    `;
-    const params = [
-      dto.surname, dto.first_name, dto.patronymic, dto.birth_date,
-      dto.passport_series, dto.passport_number, dto.passport_issue_date, dto.passport_div_code, dto.passport_issued_by,
-      dto.reg_region, dto.reg_city, dto.reg_street, dto.reg_house, dto.reg_building, dto.reg_apartment,
-      id
-    ];
-    const result = await this.db.query(sql, params);
+    const sql = `UPDATE employees SET ${sets}, updated_at = NOW() WHERE id = $${keys.length + 1} RETURNING *;`;
+    
+    const result = await this.db.query(sql, [...values, id]);
+
+    // Исправление ошибки 4: Автоматическая запись истории
+    // Сравниваем старое и новое, пишем изменения
+    for (const key of keys) {
+        const oldVal = String(oldEmployee[key] || '');
+        const newVal = String((dto as any)[key] || '');
+        if (oldVal !== newVal) {
+            await this.history.create({
+                entity_type: 'employee',
+                entity_id: id,
+                field_name: key,
+                old_value: oldVal,
+                new_value: newVal,
+            });
+        }
+    }
+
     return result.rows[0];
   }
 

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DbService } from '../db/db.service';
 import { CreateHrOperationDto } from './dto/create-hr-operation.dto';
+import { UpdateHrOperationDto } from './dto/update-hr-operation.dto';
 
 @Injectable()
 export class HrOperationsService {
@@ -12,7 +13,6 @@ export class HrOperationsService {
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *;
     `;
-    // Явно приводим undefined к null для корректной работы SQL
     const params = [
       dto.employee_id,
       dto.operation_type,
@@ -37,29 +37,30 @@ export class HrOperationsService {
     return result.rows[0];
   }
 
-  async update(id: number, dto: CreateHrOperationDto) {
-    await this.findOne(id);
+  // Исправлено: убран лишний findOne, используется UpdateDto
+  async update(id: number, dto: UpdateHrOperationDto) {
+    const keys = Object.keys(dto);
+    if (keys.length === 0) return this.findOne(id); // Если пустой DTO, просто возвращаем запись
+
+    const sets = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
+    const values = keys.map(key => (dto as any)[key] ?? null);
 
     const sql = `
-      UPDATE hr_operations SET
-        employee_id = $1, operation_type = $2, department_id = $3, position_id = $4, salary = $5,
-        updated_at = NOW()
-      WHERE id = $6
+      UPDATE hr_operations SET ${sets}, updated_at = NOW()
+      WHERE id = $${keys.length + 1} AND deleted_at IS NULL
       RETURNING *;
     `;
-    const params = [
-      dto.employee_id,
-      dto.operation_type,
-      dto.department_id || null,
-      dto.position_id || null,
-      dto.salary || null,
-      id,
-    ];
-    const result = await this.db.query(sql, params);
+    
+    const result = await this.db.query(sql, [...values, id]);
+
+    if (!result.rows[0]) {
+      throw new NotFoundException(`Кадровая операция с ID ${id} не найдена или удалена`);
+    }
     return result.rows[0];
   }
 
   async remove(id: number) {
+    // Здесь findOne нужен, чтобы вернуть 404 если уже удалено
     await this.findOne(id);
     await this.db.query(`UPDATE hr_operations SET deleted_at = NOW() WHERE id = $1;`, [id]);
     return { success: true };

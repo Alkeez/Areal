@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { DbService } from '../db/db.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
+import { UpdateOrganizationDto } from './dto/update-organization.dto';
 
 @Injectable()
 export class OrganizationsService {
@@ -29,12 +30,20 @@ export class OrganizationsService {
     return result.rows[0];
   }
 
-  async update(id: number, dto: CreateOrganizationDto) {
-    // Проверяем существование перед обновлением
-    await this.findOne(id); 
+    async update(id: number, dto: UpdateOrganizationDto) {
+    const keys = Object.keys(dto);
+    if (keys.length === 0) return this.findOne(id);
+ 
+    const sets = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
+    const values = keys.map(key => (dto as any)[key] ?? null);
+
+    const sql = `UPDATE organizations SET ${sets}, updated_at = NOW() WHERE id = $${keys.length + 1} AND deleted_at IS NULL RETURNING *;`;
     
-    const sql = `UPDATE organizations SET name = $1, comment = $2, updated_at = NOW() WHERE id = $3 RETURNING *;`;
-    const result = await this.db.query(sql, [dto.name, dto.comment, id]);
+    const result = await this.db.query(sql, [...values, id]);
+
+    if (!result.rows[0]) {
+      throw new NotFoundException(`Организация с ID ${id} не найдена`);
+    }
     return result.rows[0];
   }
 

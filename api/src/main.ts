@@ -1,18 +1,36 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
+import session from 'express-session';
+import passport from 'passport';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
-  // 10. Глобальный префикс
+
+  app.enableCors({
+    origin: 'http://localhost:8080',
+    credentials: true,
+  });
+
+  app.use(
+    session({
+      secret: 'my-secret-key',
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        maxAge: 3600000,
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+      },
+    }),
+  );
+
+  app.use(passport.initialize());
+  app.use(passport.session());
+
   app.setGlobalPrefix('api');
-  
-  // 14. Подключение ValidationPipe
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true, // Удаляет поля, которых нет в DTO
-    forbidNonWhitelisted: true, // Блокирует запрос с лишними полями
-  }));
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
 
   await app.listen(3000);
 }

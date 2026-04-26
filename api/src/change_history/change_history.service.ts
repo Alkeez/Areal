@@ -24,8 +24,22 @@ export class ChangeHistoryService {
     return result.rows[0];
   }
 
-  async findAll() {
-    const result = await this.db.query(`SELECT * FROM change_history ORDER BY created_at DESC;`);
+    async findAll(entityType?: string, entityId?: number) {
+    let sql = `SELECT * FROM change_history WHERE 1=1`;
+    const params: any[] = [];
+    
+    if (entityType) {
+      params.push(entityType);
+      sql += ` AND entity_type = $${params.length}`;
+    }
+    if (entityId) {
+      params.push(entityId);
+      sql += ` AND entity_id = $${params.length}`;
+    }
+    
+    sql += ` ORDER BY created_at DESC;`;
+    
+    const result = await this.db.query(sql, params);
     return result.rows;
   }
 

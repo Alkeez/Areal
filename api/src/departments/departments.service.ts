@@ -2,10 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { DbService } from '../db/db.service';
 import { CreateDepartmentDto } from './dto/create-department.dto';
 import { UpdateDepartmentDto } from './dto/update-department.dto';
+import { ChangeHistoryService } from '../change_history/change_history.service';
 
 @Injectable()
 export class DepartmentsService {
-  constructor(private readonly db: DbService) {}
+  constructor(
+    private readonly db: DbService,
+    private readonly history: ChangeHistoryService
+  ) {}
 
   async create(dto: CreateDepartmentDto) {
     const sql = `
@@ -38,25 +42,36 @@ export class DepartmentsService {
   }
 
   async update(id: number, dto: UpdateDepartmentDto) {
+    const oldItem = await this.findOne(id); // Получаем старое
+
     const keys = Object.keys(dto);
-    if (keys.length === 0) {
-      return this.findOne(id);
-    }
+    if (keys.length === 0) return oldItem;
 
     const sets = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
     const values = keys.map(key => (dto as any)[key] ?? null);
 
-    const sql = `
-      UPDATE departments SET ${sets}, updated_at = NOW()
-      WHERE id = $${keys.length + 1} AND deleted_at IS NULL
-      RETURNING *;
-    `;
-
+    const sql = `UPDATE departments SET ${sets}, updated_at = NOW() WHERE id = $${keys.length + 1} AND deleted_at IS NULL RETURNING *;`;
     const result = await this.db.query(sql, [...values, id]);
 
     if (!result.rows[0]) {
       throw new NotFoundException(`Отдел с ID ${id} не найден или был удален`);
     }
+
+    // История
+    for (const key of keys) {
+      const oldVal = String(oldItem[key] ?? '');
+      const newVal = String((dto as any)[key] ?? '');
+      if (oldVal !== newVal) {
+        await this.history.create({
+          entity_type: 'department',
+          entity_id: id,
+          field_name: key,
+          old_value: oldVal,
+          new_value: newVal,
+        });
+      }
+    }
+
     return result.rows[0];
   }
 

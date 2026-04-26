@@ -8,7 +8,7 @@ export default defineConfig({
       template: { transformAssetUrls }
     }),
     quasar({
-      // sassVariables: 'src/quasar-variables.scss' // УБРАЛИ ЭТУ СТРОКУ
+      
     })
   ],
   server: {
@@ -17,6 +17,7 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
+        cookieDomainRewrite: 'localhost'
       }
     }
   }

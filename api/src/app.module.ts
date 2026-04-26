@@ -9,9 +9,11 @@ import { EmployeesModule } from './employees/employees.module';
 import { FilesModule } from './files/files.module';
 import { HrOperationsModule } from './hr_operations/hr_operations.module';
 import { ChangeHistoryModule } from './change_history/change_history.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [DbModule, OrganizationsModule, PositionsModule, DepartmentsModule, EmployeesModule, FilesModule, HrOperationsModule, ChangeHistoryModule],
+  imports: [DbModule, OrganizationsModule, PositionsModule, DepartmentsModule, EmployeesModule, FilesModule, HrOperationsModule, ChangeHistoryModule, UsersModule, AuthModule],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -3,12 +3,18 @@ import MainLayout from '../layouts/MainLayout.vue';
 
 const routes = [
   {
+    path: '/login',
+    name: 'Login',
+    component: () => import('../pages/LoginPage.vue'),
+    meta: { public: true }
+  },
+  {
     path: '/',
     component: MainLayout,
     children: [
       {
         path: '',
-        redirect: '/organizations' // По умолчанию открываем организации
+        redirect: '/organizations'
       },
       {
         path: '/organizations',
@@ -25,6 +31,31 @@ const routes = [
         name: 'Positions',
         component: () => import('../pages/PositionsPage.vue'),
       },
+      {
+        path: '/users',
+        name: 'Users',
+        component: () => import('../pages/UsersPage.vue'),
+      },
+      {
+        path: '/employees',
+        name: 'Employees',
+        component: () => import('../pages/EmployeesPage.vue'),
+      },
+      {
+        path: '/employees/:id/history',
+        name: 'EmployeeHistory',
+        component: () => import('../pages/EmployeeHistoryPage.vue'),
+      },
+      {
+        path: '/hr',
+        name: 'HrOperations',
+        component: () => import('../pages/HrOperationsPage.vue'),
+      },
+      {
+        path: '/history',
+        name: 'GlobalHistory',
+        component: () => import('../pages/GlobalHistoryPage.vue'), // Создадим ниже
+      }
     ],
   },
 ];

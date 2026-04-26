@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { ChangeHistoryService } from './change_history.service';
 import { CreateChangeHistoryDto } from './dto/create-change-history.dto';
 
@@ -12,8 +12,8 @@ export class ChangeHistoryController {
   }
 
   @Get()
-  findAll() {
-    return this.service.findAll();
+  findAll(@Query('type') type?: string, @Query('id') id?: string) {
+    return this.service.findAll(type, id ? parseInt(id) : undefined);
   }
 
   @Get(':id')

@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Body, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, ParseIntPipe, Query, UseGuards } from '@nestjs/common';
 import { ChangeHistoryService } from './change_history.service';
 import { CreateChangeHistoryDto } from './dto/create-change-history.dto';
+import { AuthenticatedGuard } from '../auth/authenticated.guard';
 
+@UseGuards(AuthenticatedGuard)
 @Controller('change_history')
 export class ChangeHistoryController {
   constructor(private readonly service: ChangeHistoryService) {}

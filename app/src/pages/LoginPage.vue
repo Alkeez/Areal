@@ -63,6 +63,8 @@ async function handleLogin() {
       login: login.value, 
       password: password.value 
     });
+
+    localStorage.setItem('authenticated', 'true');
     
     Notify.create({ 
       type: 'positive', 

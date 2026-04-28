@@ -107,6 +107,7 @@ function toggleLeftDrawer() {
 async function logout() {
   try {
     await api.post('/auth/logout');
+    localStorage.removeItem('authenticated');
     currentUser.value = null; 
     router.push('/login');
   } catch (e) {

@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, ParseIntPipe, Query, UseGuards } from '@nestjs/common';
 import { EmployeesService } from './employees.service';
-import { CreateEmployeeDto, UpdateEmployeeDto } from './dto/create-employee.dto'; // Импортируем оба
+import { CreateEmployeeDto, UpdateEmployeeDto } from './dto/create-employee.dto';
+import { AuthenticatedGuard } from '../auth/authenticated.guard';
 
+@UseGuards(AuthenticatedGuard)
 @Controller('employees')
 export class EmployeesController {
   constructor(private readonly service: EmployeesService) {}
@@ -11,7 +13,6 @@ export class EmployeesController {
     return this.service.create(dto);
   }
 
-  // Исправление ошибки 5: Добавляем поиск
   @Get()
   findAll(@Query('search') search?: string) {
     return this.service.findAll(search);
@@ -22,7 +23,6 @@ export class EmployeesController {
     return this.service.findOne(id);
   }
 
-  // Используем UpdateEmployeeDto
   @Put(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateEmployeeDto) {
     return this.service.update(id, dto);
